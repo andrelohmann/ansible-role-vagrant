@@ -1,0 +1,53 @@
+---
+
+- name: Install packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+    dpkg_options: 'force-confnew,force-confdef'
+    autoclean: true
+    autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+  vars:
+    packages:
+    - curl
+    - jq
+    - unzip
+    - libfuse2
+
+- name: Extract latest version number
+  when: vagrant_version == "latest"
+  block:
+
+  - name: Fetch latest vagrant version
+    ansible.builtin.shell: >
+      set -o pipefail && \
+      curl -s https://checkpoint-api.hashicorp.com/v1/check/vagrant | jq -r -M '.current_version'
+    args:
+      executable: /bin/bash
+    register: latest_vagrant_version
+    changed_when: false
+
+  - name: Set vagrant_version
+    ansible.builtin.set_fact:
+      vagrant_version: "{{ latest_vagrant_version.stdout }}"
+
+- name: Check vagrant version
+  ansible.builtin.shell: "set -o pipefail && vagrant --version 2>&1 | grep {{ vagrant_version }}"
+  failed_when: false
+  register: vagrant_versions_match
+  changed_when: false
+
+- name: Download vagrant
+  ansible.builtin.include_tasks: download.yml
+  when: vagrant_versions_match.rc != 0
+
+- name: Unarchive vagrant archive
+  ansible.builtin.unarchive:
+    src: /tmp/vagrant-{{ vagrant_version }}.zip
+    dest: "/usr/local/bin"
+    copy: false
+  when: vagrant_versions_match.rc != 0
+
+...

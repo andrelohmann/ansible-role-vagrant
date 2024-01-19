@@ -1,0 +1,9 @@
+---
+- name: Download vagrant archive for Linux amd64 ar arm64
+  ansible.builtin.get_url:
+    url: https://releases.hashicorp.com/vagrant/{{ vagrant_version }}/vagrant_{{ vagrant_version }}_linux_{{ [ansible_architecture] | map('extract', vagrant_deb_architecture) | first }}.zip
+    dest: /tmp/vagrant-{{ vagrant_version }}.zip
+    owner: root
+    group: root
+    mode: 0644
+...
