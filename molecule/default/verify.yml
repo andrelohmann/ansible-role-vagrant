@@ -7,7 +7,7 @@
   tasks:
 
   - name: Run vagrant
-    ansible.builtin.shell: which vagrant
+    ansible.builtin.command: which vagrant
     register: vagrant_status
 
   - name: Dump vagrant status
